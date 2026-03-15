@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 
 <style>
-
 body{
 background:linear-gradient(180deg,#0a0a0a,#000);
 font-family:Segoe UI;
@@ -52,9 +51,7 @@ cursor:pointer;
 transition:0.25s;
 }
 
-button:hover{
-transform:scale(1.05);
-}
+button:hover{transform:scale(1.05)}
 
 #startBtn{background:linear-gradient(45deg,#00eaff,#00ff88);color:black;}
 #splitBtn{background:linear-gradient(45deg,#00ff88,#00ffaa);color:black;}
@@ -68,11 +65,7 @@ text-shadow:0 0 20px #00eaff;
 margin-top:12px;
 }
 
-#runinfo{
-margin-top:5px;
-color:#bbb;
-font-size:14px;
-}
+#runinfo{margin-top:5px;color:#bbb;font-size:14px}
 
 #progress{
 width:100%;
@@ -93,7 +86,8 @@ background:linear-gradient(90deg,#00eaff,#00ff88);
 margin-top:15px;
 background:#070707;
 border-radius:10px;
-overflow:hidden;
+overflow-y:auto;
+max-height:350px; /* limita altura da div e ativa scroll */
 }
 
 .split{
@@ -110,8 +104,6 @@ color:#00eaff;
 }
 
 .gold{color:gold}
-.green{color:#00ff88}
-.red{color:#ff5555}
 
 #estimation{
 margin-top:6px;
@@ -119,7 +111,6 @@ font-size:18px;
 color:#66eaff;
 text-shadow:0 0 10px #66eaff;
 }
-
 </style>
 </head>
 
@@ -141,6 +132,7 @@ text-shadow:0 0 10px #66eaff;
 </select>
 
 <select id="category"></select>
+<select id="subcategory"></select>
 
 <select id="platform">
 <option>PC</option>
@@ -173,360 +165,200 @@ Estimated: <span id="ect">--:--.---</span>
 </div>
 
 <script>
-
-let startTime
-let timerInterval
-let currentSplit=0
-let attempts=0
-let splitTimes=[]
-let bestSplits=[]
+let startTime, timerInterval, currentSplit=0, splitTimes=[], bestSegments=[], pbTime=null
 
 const categories={
-gv1:["Any%"],
-gv2:["Any% Gunvolt","Any% Copen"],
-gv3:["Any%"],
-ix1:["Any%"],
+gv1:["New Game Any%","New Game Good Ending","Speedrun Mode","Speedrun Mode - Kudos Keeper","Trilogy Enhanced","Broken Necklace"],
+gv2:["Any% Gunvolt","Any% Copen","Good Endings","Speedrun Mode Gunvolt","Speedrun Mode Copen","Trilogy Enhanced"],
+gv3:["Any%","Trial Mode","D-nizer","ATEMS","Kirin Only","Trilogy Enhanced"],
+ix1:["Any%","No Pride"],
 ix2:["Any%","Hard Mode"]
 }
 
 const stages={
-
-gv1:[
-"Sumeragi 1",
-"Merak",
-"Jota",
-"Viper",
-"Carrera",
-"Elise",
-"Stratos",
-"Urban, Eridu, Babel, Firmament"
-],
-
-gv2_gv:[
-"Seraph",
-"Tenjian 1",
-"Gibril",
-"Milas",
-"Teseo",
-"Tenjian 2",
-"Ghauri",
-"Garden 1, 2, 3"
-],
-
-gv2_copen:[
-"Downtown",
-"Desna",
-"Asroc",
-"Ghauri",
-"Tenjian",
-"Gibril",
-"Garden 1, 2, 3"
-],
-
-gv3:[
-"Primal GV",
-"BB",
-"Shiron",
-"Apollo",
-"Cayman",
-"Zed 1",
-"Grazie",
-"Sistina",
-"Prado",
-"Serpentine",
-"Palace 1, 2, 3",
-"Zed 2",
-"Moebius, Moebius GV"
-],
-  
-ix1:[
-"Slums",
-"Building 13",
-"Auto Plant",
-"Store Ruins",
-"Medical",
-"Data Beta",
-"Data Alpha",
-"Artemis Tower",
-"Slums 2",
-"Bunker 1, 2, 3"
-],
-
-ix2:[
-"Pillar",
-"Volcano",
-"Jungle",
-"Upper",
-"Lab",
-"Industrial",
-"Arctic",
-"Space",
-"Top Floor",
-"Hanging Garden 1 and 2"
-]
-
+gv1:["Sumeragi 1","Merak","Jota","Viper","Carrera","Elise","Stratos","Final"],
+gv2_gv:["Seraph","Tenjian 1","Gibril","Milas","Teseo","Tenjian 2","Ghauri","Garden"],
+gv2_copen:["Downtown","Desna","Asroc","Ghauri","Tenjian","Gibril","Garden"],
+gv3:["Primal GV","BB","Shiron","Apollo","Cayman","Zed 1","Grazie","Sistina","Prado","Serpentine","Palace","Zed 2","Moebius"],
+gv3_Dnizer:["Primal GV","BB","Shiron","Apollo","Cayman","Zed 1","Grazie","Sistina","Prado","Serpentine","Palace 1,2,3","Zed 2 (Sunrise Throne)"],
+gv3_ATEMS:["BB","Shiron","Apollo","Cayman","Primal GV","Layla"],
+gv3_Trial:{
+"All Missions Normal":["Primal GV","BB","Shiron","Apollo","Cayman","Zed 1","Grazie","Sistina","Prado","Serpentine","Palace 1,2,3","Zed 2","Moebius"],
+"All Missions Hard":["Primal GV","BB","Shiron","Apollo","Cayman","Zed 1","Grazie","Sistina","Prado","Serpentine","Palace 1,2,3","Zed 2","Moebius"]
+},
+ix1:["Slums","Building 13","Auto Plant","Store Ruins","Medical","Data Beta","Data Alpha","Artemis Tower","Bunker"],
+ix2:["Pillar","Volcano","Jungle","Upper","Lab","Industrial","Arctic","Space","Top Floor","Hanging Garden"]
 }
 
 const gameSelect=document.getElementById("game")
 const categorySelect=document.getElementById("category")
+const subcategorySelect=document.getElementById("subcategory")
 const splitDiv=document.getElementById("splits")
 
 gameSelect.addEventListener("change",loadCategories)
-categorySelect.addEventListener("change",()=>{
-loadSplits()
-updateInfo()
-})
+categorySelect.addEventListener("change",()=>{ loadSubcategories(); loadSplits(); updateInfo() })
+subcategorySelect.addEventListener("change",loadSplits)
+document.getElementById("platform").addEventListener("change",updateInfo)
 
-document.getElementById("platform")
-.addEventListener("change",updateInfo)
+function getRunKey(){ return gameSelect.value+"_"+categorySelect.value+"_"+subcategorySelect.value+"_"+document.getElementById("platform").value }
+function saveData(){ localStorage.setItem(getRunKey(),JSON.stringify({pb:pbTime,bestSeg:bestSegments})) }
+function loadData(){ let data=localStorage.getItem(getRunKey()); if(!data) return; data=JSON.parse(data); pbTime=data.pb; bestSegments=data.bestSeg||[] }
 
 function loadCategories(){
-
 let game=gameSelect.value
 categorySelect.innerHTML=""
-
 categories[game].forEach(c=>{
-let o=document.createElement("option")
-o.textContent=c
-categorySelect.appendChild(o)
+let o=document.createElement("option"); o.textContent=c; categorySelect.appendChild(o)
 })
-
+loadSubcategories()
 loadSplits()
 updateInfo()
+}
 
+function loadSubcategories(){
+subcategorySelect.innerHTML=""
+let game=gameSelect.value, cat=categorySelect.value
+
+if(game==="gv3" && cat==="Trial Mode"){
+for(const sub in stages.gv3_Trial){
+let o=document.createElement("option"); o.value=sub; o.textContent=sub; subcategorySelect.appendChild(o)
+}}
+else if(game==="gv3" && cat==="ATEMS"){
+let o=document.createElement("option"); o.value="ATEMS"; o.textContent="ATEMS Order"; subcategorySelect.appendChild(o)
+}
+else if(game==="gv3" && cat==="D-nizer"){
+let o=document.createElement("option"); o.value="D-nizer"; o.textContent="D-nizer"; subcategorySelect.appendChild(o)
+}
+else if(game==="ix1" && (cat==="Any%"||cat==="No Pride")){
+stages.ix1.forEach(s=>{
+let o=document.createElement("option"); o.value=s; o.textContent=s; subcategorySelect.appendChild(o)
+})
+}
+else{
+let o=document.createElement("option"); o.value="default"; o.textContent="Default"; subcategorySelect.appendChild(o)
+}
 }
 
 function loadSplits(){
-
-let game=gameSelect.value
-let cat=categorySelect.value
-
+loadData()
 splitDiv.innerHTML=""
 currentSplit=0
 splitTimes=[]
-
+let game=gameSelect.value, cat=categorySelect.value, sub=subcategorySelect.value
 let list=[]
 
 if(game==="gv2"){
 if(cat==="Any% Gunvolt") list=stages.gv2_gv
-else list=stages.gv2_copen
+else if(cat==="Any% Copen") list=stages.gv2_copen
+else if(cat==="Speedrun Mode Copen") list=stages.gv2_copen
+else if(cat==="Good Endings") list=["--- Gunvolt Route ---", ...stages.gv2_gv, "--- Copen Route ---", ...stages.gv2_copen]
+else list=stages.gv2_gv
 }
-else{
-list=stages[game]
+else if(game==="gv3"){
+if(cat==="ATEMS") list=stages.gv3_ATEMS
+else if(cat==="Trial Mode") list=stages.gv3_Trial[sub] || []
+else if(cat==="D-nizer") list=stages.gv3_Dnizer
+else list=stages.gv3
 }
+else if(game==="ix1"){
+list = stages.ix1[sub] ? [sub] : stages.ix1
+}
+else list = stages[game] || []
 
 list.forEach(stage=>{
-
 let div=document.createElement("div")
 div.className="split"
-
-div.innerHTML=`
-<span>${stage}</span>
-<span>-</span>
-<span></span>
-`
-
+div.innerHTML=`<span>${stage}</span><span>-</span>`
 splitDiv.appendChild(div)
-
 })
 
 highlight()
 updateProgress()
+scrollToCurrent()
+}
+
+// Scroll automático
+function scrollToCurrent(){
+let splits=document.querySelectorAll(".split")
+if(splits[currentSplit]){
+splits[currentSplit].scrollIntoView({behavior:"smooth", block:"center"})
+}
 
 }
 
 function updateInfo(){
-
-let game=gameSelect.value
-let cat=categorySelect.value
-let plat=document.getElementById("platform").value
-
+let game=gameSelect.value, cat=categorySelect.value, sub=subcategorySelect.value, plat=document.getElementById("platform").value
 document.getElementById("runinfo").textContent=
-game.toUpperCase()+" | "+cat+" | "+plat
-
+game.toUpperCase()+" | "+cat+(sub!=="default"?" - "+sub:"")+" | "+plat
 }
 
-function highlight(){
-
-let splits=document.querySelectorAll(".split")
-splits.forEach(s=>s.classList.remove("current"))
-
-if(splits[currentSplit])
-splits[currentSplit].classList.add("current")
-
+function highlight(){ 
+let splits=document.querySelectorAll(".split"); 
+splits.forEach(s=>s.classList.remove("current")); 
+if(splits[currentSplit]) splits[currentSplit].classList.add("current")
+scrollToCurrent()
 }
 
-function startTimer(){
-
-if(timerInterval) return
-
-startTime=Date.now()
-
-timerInterval=setInterval(()=>{
-
-let t=Date.now()-startTime
-updateECT()
-
-let m=Math.floor(t/60000)
-let s=Math.floor((t%60000)/1000)
-let ms=t%1000
-
-document.getElementById("timer").textContent=
-String(m).padStart(2,"0")+":"+
-String(s).padStart(2,"0")+"."+
-String(ms).padStart(3,"0")
-
+function startTimer(){ if(timerInterval) return; startTime=Date.now(); timerInterval=setInterval(()=>{
+let t=Date.now()-startTime; updateECT()
+let m=Math.floor(t/60000), s=Math.floor((t%60000)/1000), ms=t%1000
+document.getElementById("timer").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")+"."+String(ms).padStart(3,"0")
 },10)
-
 }
 
 function split(){
-
 let splits=document.querySelectorAll(".split")
-
 if(!splits[currentSplit]) return
-
 let time=Date.now()-startTime
 splitTimes.push(time)
-
-splits[currentSplit].children[1].textContent=
-document.getElementById("timer").textContent
-
-if(bestSplits[currentSplit]==null || time<bestSplits[currentSplit]){
-bestSplits[currentSplit]=time
-splits[currentSplit].classList.add("gold")
-}
-
-currentSplit++
-
-updateProgress()
-
-if(currentSplit===splits.length){
-clearInterval(timerInterval)
-}
-
+let prev=currentSplit>0?splitTimes[currentSplit-1]:0
+let segment=time-prev
+if(bestSegments[currentSplit]==null || segment<bestSegments[currentSplit]){ bestSegments[currentSplit]=segment; splits[currentSplit].classList.add("gold") }
+splits[currentSplit].children[1].textContent=document.getElementById("timer").textContent
+currentSplit++; updateProgress()
+if(currentSplit===splits.length){ clearInterval(timerInterval); let finalTime=Date.now()-startTime; if(pbTime==null||finalTime<pbTime){ pbTime=finalTime; alert("NEW PB!") } saveData() }
 highlight()
-
 }
 
 function undo(){
-
 if(currentSplit===0) return
-
-currentSplit--
-splitTimes.pop()
-
+currentSplit--; splitTimes.pop()
 let splits=document.querySelectorAll(".split")
-
 splits[currentSplit].children[1].textContent="-"
-
-highlight()
-updateProgress()
-
+highlight(); updateProgress()
 }
 
 function resetTimer(){
-
 document.getElementById("ect").textContent="--:--.---"
-clearInterval(timerInterval)
-timerInterval=null
-
-attempts++
-
-document.getElementById("attempts").textContent=
-"Attempts: "+attempts
-
+clearInterval(timerInterval); timerInterval=null
 document.getElementById("timer").textContent="00:00.000"
-
-currentSplit=0
-splitTimes=[]
-
+currentSplit=0; splitTimes=[]
 let splits=document.querySelectorAll(".split")
-
-splits.forEach(s=>{
-s.children[1].textContent="-"
-s.classList.remove("gold")
-})
-
-highlight()
-updateProgress()
-
+splits.forEach(s=>{ s.children[1].textContent="-"; s.classList.remove("gold") })
+highlight(); updateProgress()
 }
 
 function updateProgress(){
-
 let splits=document.querySelectorAll(".split")
-
-let percent=(currentSplit/splits.length)*100
-
-document.getElementById("bar").style.width=percent+"%"
-
+document.getElementById("bar").style.width=(currentSplit/splits.length)*100+"%"
 }
 
-document.addEventListener("keydown",function(e){
+function updateECT(){
+if(!startTime) return
+let remaining=0
+for(let i=currentSplit;i<bestSegments.length;i++) remaining+=bestSegments[i]||0
+let current=Date.now()-startTime
+let ect=current+remaining
+let m=Math.floor(ect/60000), s=Math.floor((ect%60000)/1000), ms=ect%1000
+document.getElementById("ect").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")+"."+String(ms).padStart(3,"0")
+}
 
+document.addEventListener("keydown",e=>{
 if(e.key==="1") startTimer()
 if(e.key==="2") split()
 if(e.key==="3") resetTimer()
 if(e.key==="4") undo()
-
 })
-
-window.addEventListener("load", () => {
-
-document.getElementById("game").selectedIndex = 0
-document.getElementById("category").innerHTML = ""
-document.getElementById("platform").selectedIndex = 0
-
-document.getElementById("splits").innerHTML = ""
-document.getElementById("runinfo").textContent = ""
-
-})
-
-function updateECT(){
-
-if(!startTime) return
-
-let remaining=0
-
-for(let i=currentSplit;i<bestSplits.length;i++){
-
-if(bestSplits[i]){
-
-let prev=i>0 ? bestSplits[i-1] : 0
-remaining += bestSplits[i] - prev
-
-}
-
-}
-
-let current=Date.now()-startTime
-let ect=current+remaining
-
-let m=Math.floor(ect/60000)
-let s=Math.floor((ect%60000)/1000)
-let ms=ect%1000
-
-document.getElementById("ect").textContent=
-String(m).padStart(2,"0")+":"+
-String(s).padStart(2,"0")+"."+
-String(ms).padStart(3,"0")
-
-}
-
-let current=Date.now()-startTime
-
-let ect=current+remaining
-
-let m=Math.floor(ect/60000)
-let s=Math.floor((ect%60000)/1000)
-let ms=ect%1000
-
-document.getElementById("ect").textContent=
-String(m).padStart(2,"0")+":"+
-String(s).padStart(2,"0")+"."+
-String(ms).padStart(3,"0")
-
 </script>
 
 </body>
