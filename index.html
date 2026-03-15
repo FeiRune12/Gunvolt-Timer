@@ -211,7 +211,7 @@ gv1:[
 
 gv2_gv:[
 "Seraph",
-"Tenjian",
+"Tenjian 1",
 "Gibril",
 "Milas",
 "Teseo",
@@ -280,7 +280,13 @@ const categorySelect=document.getElementById("category")
 const splitDiv=document.getElementById("splits")
 
 gameSelect.addEventListener("change",loadCategories)
-categorySelect.addEventListener("change",loadSplits)
+categorySelect.addEventListener("change",()=>{
+loadSplits()
+updateInfo()
+})
+
+document.getElementById("platform")
+.addEventListener("change",updateInfo)
 
 function loadCategories(){
 
