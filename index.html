@@ -6,108 +6,93 @@
 <style>
 
 body{
-background:radial-gradient(circle at top,#0b0b0b,#000);
-color:white;
+background:linear-gradient(180deg,#0a0a0a,#000);
 font-family:Segoe UI;
-text-align:center;
+color:white;
 margin:0;
+text-align:center;
+}
+
+#container{
+width:520px;
+margin:auto;
+margin-top:35px;
 }
 
 #title{
 font-size:36px;
-margin-top:20px;
-color:#00ffff;
-text-shadow:0 0 15px cyan,0 0 35px cyan;
+color:#00eaff;
+text-shadow:0 0 20px #00eaff;
+margin-bottom:15px;
 }
 
 .panel{
-margin:auto;
-margin-top:20px;
-padding:15px;
-width:460px;
-background:rgba(20,20,20,0.7);
-border:1px solid #222;
-border-radius:10px;
-box-shadow:0 0 20px rgba(0,255,255,0.15);
+background:#0c0c0c;
+padding:18px;
+border-radius:12px;
+box-shadow:0 0 25px rgba(0,255,255,0.15);
 }
-
-/* SELECTS */
 
 select{
-width:130px;
-padding:8px;
-margin:6px;
-background:#0f0f0f;
+background:#111;
 color:white;
-border:1px solid #00ffff55;
+border:1px solid #333;
 border-radius:6px;
-outline:none;
-font-size:14px;
-transition:0.25s;
+padding:6px;
+margin:4px;
 }
-
-select:hover{
-border-color:cyan;
-box-shadow:0 0 10px cyan;
-}
-
-/* BOTÕES */
 
 button{
-padding:8px 18px;
-margin:6px;
-font-size:15px;
 border:none;
-border-radius:6px;
+padding:9px 15px;
+margin:5px;
+border-radius:8px;
+font-weight:bold;
 cursor:pointer;
 transition:0.25s;
 }
 
-#startBtn{
-background:#00bfff;
-color:black;
-}
-
-#splitBtn{
-background:#00ff88;
-color:black;
-}
-
-#resetBtn{
-background:#ff4444;
-color:white;
-}
-
 button:hover{
 transform:scale(1.05);
-box-shadow:0 0 12px white;
 }
 
-/* TIMER */
+#startBtn{background:linear-gradient(45deg,#00eaff,#00ff88);color:black;}
+#splitBtn{background:linear-gradient(45deg,#00ff88,#00ffaa);color:black;}
+#undoBtn{background:linear-gradient(45deg,#ffaa00,#ffcc00);}
+#resetBtn{background:linear-gradient(45deg,#ff4444,#ff2222);color:white;}
 
 #timer{
-font-size:82px;
-margin-top:15px;
-color:#00ffff;
-text-shadow:0 0 25px cyan,0 0 50px cyan;
+font-size:72px;
+color:#00eaff;
+text-shadow:0 0 20px #00eaff;
+margin-top:12px;
 }
 
-#prediction{
+#runinfo{
 margin-top:5px;
-color:orange;
-font-size:16px;
+color:#bbb;
+font-size:14px;
 }
 
-/* SPLITS */
+#progress{
+width:100%;
+height:8px;
+background:#111;
+border-radius:6px;
+margin-top:10px;
+overflow:hidden;
+}
+
+#bar{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#00eaff,#00ff88);
+}
 
 #splits{
-width:460px;
-margin:auto;
-margin-top:20px;
-text-align:left;
-background:rgba(15,15,15,0.8);
-border-radius:8px;
-border:1px solid #222;
+margin-top:15px;
+background:#070707;
+border-radius:10px;
 overflow:hidden;
 }
 
@@ -115,25 +100,30 @@ overflow:hidden;
 display:flex;
 justify-content:space-between;
 padding:7px 10px;
-border-bottom:1px solid #1f1f1f;
+border-bottom:1px solid #151515;
 font-size:14px;
 }
 
-.split:nth-child(even){
-background:#090909;
+.split.current{
+background:#002a2f;
+color:#00eaff;
 }
 
-.current{
-color:#00ffff;
-font-weight:bold;
-background:rgba(0,255,255,0.08);
-border-left:4px solid cyan;
+.gold{color:gold}
+.green{color:#00ff88}
+.red{color:#ff5555}
+
+#attempts{
+margin-top:8px;
+color:#ffaa00;
 }
 
 </style>
 </head>
 
 <body>
+
+<div id="container">
 
 <div id="title">Gunvolt Speedrun Timer</div>
 
@@ -144,18 +134,16 @@ border-left:4px solid cyan;
 <option value="gv1">Gunvolt 1</option>
 <option value="gv2">Gunvolt 2</option>
 <option value="gv3">Gunvolt 3</option>
-<option value="ix1">Luminous Avenger iX</option>
-<option value="ix2">Luminous Avenger iX2</option>
+<option value="ix1">iX</option>
+<option value="ix2">iX2</option>
 </select>
 
-<select id="category">
-<option>Category</option>
-</select>
+<select id="category"></select>
 
 <select id="platform">
 <option>PC</option>
-<option>PlayStation</option>
 <option>Switch</option>
+<option>PlayStation</option>
 <option>Xbox</option>
 </select>
 
@@ -163,84 +151,121 @@ border-left:4px solid cyan;
 
 <button id="startBtn" onclick="startTimer()">Start</button>
 <button id="splitBtn" onclick="split()">Split</button>
+<button id="undoBtn" onclick="undo()">Undo</button>
 <button id="resetBtn" onclick="resetTimer()">Reset</button>
 
 <div id="timer">00:00.000</div>
-<div id="prediction">Estimated Final Time: --:--</div>
+
+<div id="runinfo"></div>
+
+<div id="progress"><div id="bar"></div></div>
+
+<div id="attempts">Attempts: 0</div>
 
 </div>
 
 <div id="splits"></div>
+
+</div>
 
 <script>
 
 let startTime
 let timerInterval
 let currentSplit=0
-
-const gameSelect=document.getElementById("game")
-const categorySelect=document.getElementById("category")
-const splitDiv=document.getElementById("splits")
+let attempts=0
+let splitTimes=[]
+let bestSplits=[]
 
 const categories={
-gv1:["New Game Any%","Trilogy Enhanced"],
-gv2:["Any% Gunvolt","Any% Copen","Good Ending"],
-gv3:["Bad Ending","Good Ending"],
+gv1:["Any%"],
+gv2:["Any% Gunvolt","Any% Copen"],
+gv3:["Any%"],
 ix1:["Any%"],
-ix2:["Any%"]
+ix2:["Any%","Hard Mode"]
 }
 
 const stages={
 
 gv1:[
-"Sumeragi 1","Merak","Jota","Viper",
-"Carrera","Elise","Stratos",
-"Urban Run","Eridu","Babel","Firmament"
+"Sumeragi 1",
+"Merak",
+"Jota",
+"Viper",
+"Carrera",
+"Elise",
+"Stratos",
+"Urban, Eridu, Babel, Firmament"
 ],
 
 gv2_gv:[
-"Seraph","Tenjian 1(GV)","Gibril","Milas",
-"Teseo","Tenjian","Ghauri",
-"Garden 1","Garden 2","Garden 3"
+"Seraph",
+"Tenjian",
+"Gibril",
+"Milas",
+"Teseo",
+"Ghauri",
+"Garden 1, 2, 3"
 ],
 
 gv2_copen:[
-"Downtown","Desna","Asroc",
-"Ghauri","Tenjian","Gibril",
-"Garden 1","Garden 2","Garden 3"
-],
-
-gv2_all:[
-"Seraph","Downtown","Tenjian 1(GV)","Gibril",
-"Milas","Teseo","Desna","Asroc",
-"Ghauri","Tenjian",
-"Garden 1","Garden 2","Garden 3","Garden 4"
+"Downtown",
+"Desna",
+"Asroc",
+"Ghauri",
+"Tenjian",
+"Gibril",
+"Garden 1, 2, 3"
 ],
 
 gv3:[
-"Primal GV","BB","Shiron","Apollo","Cayman",
-"Zed 1","Grazie","Sistina","Prado","Serpentine",
-"Palace 1","Palace 2","Palace 3",
-"Zed 2","Moebius"
+"Primal GV",
+"BB",
+"Shiron",
+"Apollo",
+"Cayman",
+"Zed 1",
+"Grazie",
+"Sistina",
+"Prado",
+"Serpentine",
+"Palace 1",
+"Palace 2",
+"Palace 3",
+"Zed 2",
+"Moebius"
 ],
 
 ix1:[
-"City Slums","Store Ruins","Sumeragi Buiding 13",
-"Auto-fab Plant","Medical Center",
-"Radio Tower Artemis","Data Center Alpha",
-"Data Center Beta","City Slums 2",
-"Bunker 1","Bunker 2","Bunker 3"
+"Slums",
+"Building 13",
+"Auto Plant",
+"Store Ruins",
+"Medical",
+"Data Beta",
+"Data Alpha",
+"Artemis Tower",
+"Bunker 1, 2, 3"
 ],
 
 ix2:[
-"Pillar Outskirts","Volcano Block","Jungle Block",
-"Upper Stratum","Laboratory Block",
-"Industrial Block","Arctic Block",
-"Top Floor","Entrance Top Floor",
-"Hanging Garden","Hanging Garden 2"
+"Pillar",
+"Volcano",
+"Jungle",
+"Upper",
+"Lab",
+"Industrial",
+"Arctic",
+"Space",
+"Top Floor",
+"Hanging Garden 1 and 2"
 ]
 
 }
+
+const gameSelect=document.getElementById("game")
+const categorySelect=document.getElementById("category")
+const splitDiv=document.getElementById("splits")
 
 gameSelect.addEventListener("change",loadCategories)
 categorySelect.addEventListener("change",loadSplits)
@@ -248,70 +273,72 @@ categorySelect.addEventListener("change",loadSplits)
 function loadCategories(){
 
 let game=gameSelect.value
-
 categorySelect.innerHTML=""
-splitDiv.innerHTML=""
-currentSplit=0
-
-if(!categories[game]) return
 
 categories[game].forEach(c=>{
-
-let option=document.createElement("option")
-option.textContent=c
-option.value=c
-categorySelect.appendChild(option)
-
+let o=document.createElement("option")
+o.textContent=c
+categorySelect.appendChild(o)
 })
 
 loadSplits()
+updateInfo()
 
 }
 
 function loadSplits(){
 
 let game=gameSelect.value
-let category=categorySelect.value
+let cat=categorySelect.value
 
 splitDiv.innerHTML=""
 currentSplit=0
+splitTimes=[]
 
 let list=[]
 
 if(game==="gv2"){
-
-if(category==="Any% Gunvolt") list=stages.gv2_gv
-else if(category==="Any% Copen") list=stages.gv2_copen
-else list=stages.gv2_all
-
+if(cat==="Any% Gunvolt") list=stages.gv2_gv
+else list=stages.gv2_copen
 }
-
 else{
-
 list=stages[game]
-
 }
-
-if(!list) return
 
 list.forEach(stage=>{
 
 let div=document.createElement("div")
 div.className="split"
-div.innerHTML=`<span>${stage}</span><span>-</span>`
+
+div.innerHTML=`
+<span>${stage}</span>
+<span>-</span>
+<span></span>
+`
 
 splitDiv.appendChild(div)
 
 })
 
 highlight()
+updateProgress()
+
+}
+
+function updateInfo(){
+
+let game=gameSelect.value
+let cat=categorySelect.value
+let plat=document.getElementById("platform").value
+
+document.getElementById("runinfo").textContent=
+game.toUpperCase()+" | "+cat+" | "+plat
 
 }
 
 function highlight(){
 
 let splits=document.querySelectorAll(".split")
-
 splits.forEach(s=>s.classList.remove("current"))
 
 if(splits[currentSplit])
@@ -344,25 +371,46 @@ String(ms).padStart(3,"0")
 
 function split(){
 
-let time=document.getElementById("timer").textContent
 let splits=document.querySelectorAll(".split")
 
 if(!splits[currentSplit]) return
 
-splits[currentSplit].children[1].textContent=time
+let time=Date.now()-startTime
+splitTimes.push(time)
+
+splits[currentSplit].children[1].textContent=
+document.getElementById("timer").textContent
+
+if(bestSplits[currentSplit]==null || time<bestSplits[currentSplit]){
+bestSplits[currentSplit]=time
+splits[currentSplit].classList.add("gold")
+}
 
 currentSplit++
 
-updatePrediction()
+updateProgress()
 
 if(currentSplit===splits.length){
-
 clearInterval(timerInterval)
-document.getElementById("prediction").textContent="Run Finished!"
-
 }
 
 highlight()
+
+}
+
+function undo(){
+
+if(currentSplit===0) return
+
+currentSplit--
+splitTimes.pop()
+
+let splits=document.querySelectorAll(".split")
+
+splits[currentSplit].children[1].textContent="-"
+
+highlight()
+updateProgress()
 
 }
 
@@ -371,37 +419,35 @@ function resetTimer(){
 clearInterval(timerInterval)
 timerInterval=null
 
+attempts++
+
+document.getElementById("attempts").textContent=
+"Attempts: "+attempts
+
 document.getElementById("timer").textContent="00:00.000"
-document.getElementById("prediction").textContent="Estimated Final Time: --:--"
+
+currentSplit=0
+splitTimes=[]
 
 let splits=document.querySelectorAll(".split")
 
 splits.forEach(s=>{
 s.children[1].textContent="-"
+s.classList.remove("gold")
 })
 
-currentSplit=0
 highlight()
+updateProgress()
 
 }
 
-function updatePrediction(){
+function updateProgress(){
 
 let splits=document.querySelectorAll(".split")
 
-if(currentSplit===0) return
+let percent=(currentSplit/splits.length)*100
 
-let totalTime=Date.now()-startTime
-let avg=totalTime/currentSplit
-let predicted=avg*splits.length
-
-let m=Math.floor(predicted/60000)
-let s=Math.floor((predicted%60000)/1000)
-
-document.getElementById("prediction").textContent=
-"Estimated Final Time: "+
-String(m).padStart(2,"0")+":"+
-String(s).padStart(2,"0")
+document.getElementById("bar").style.width=percent+"%"
 
 }
 
@@ -410,6 +456,7 @@ document.addEventListener("keydown",function(e){
 if(e.key==="1") startTimer()
 if(e.key==="2") split()
 if(e.key==="3") resetTimer()
+if(e.key==="4") undo()
 
 })
 
