@@ -118,6 +118,13 @@ margin-top:8px;
 color:#ffaa00;
 }
 
+#estimation{
+margin-top:6px;
+font-size:18px;
+color:#66eaff;
+text-shadow:0 0 10px #66eaff;
+}
+
 </style>
 </head>
 
@@ -155,6 +162,10 @@ color:#ffaa00;
 <button id="resetBtn" onclick="resetTimer()">Reset</button>
 
 <div id="timer">00:00.000</div>
+
+<div id="estimation">
+Estimated: <span id="ect">--:--.---</span>
+</div>
 
 <div id="runinfo"></div>
 
@@ -355,6 +366,7 @@ startTime=Date.now()
 timerInterval=setInterval(()=>{
 
 let t=Date.now()-startTime
+updateECT()
 
 let m=Math.floor(t/60000)
 let s=Math.floor((t%60000)/1000)
@@ -416,6 +428,7 @@ updateProgress()
 
 function resetTimer(){
 
+document.getElementById("ect").textContent="--:--.---"
 clearInterval(timerInterval)
 timerInterval=null
 
@@ -459,6 +472,61 @@ if(e.key==="3") resetTimer()
 if(e.key==="4") undo()
 
 })
+
+window.addEventListener("load", () => {
+
+document.getElementById("game").selectedIndex = 0
+document.getElementById("category").innerHTML = ""
+document.getElementById("platform").selectedIndex = 0
+
+document.getElementById("splits").innerHTML = ""
+document.getElementById("runinfo").textContent = ""
+
+})
+
+function updateECT(){
+
+if(!startTime) return
+
+let remaining=0
+
+for(let i=currentSplit;i<bestSplits.length;i++){
+
+if(bestSplits[i]){
+
+let prev=i>0 ? bestSplits[i-1] : 0
+remaining += bestSplits[i] - prev
+
+}
+
+}
+
+let current=Date.now()-startTime
+let ect=current+remaining
+
+let m=Math.floor(ect/60000)
+let s=Math.floor((ect%60000)/1000)
+let ms=ect%1000
+
+document.getElementById("ect").textContent=
+String(m).padStart(2,"0")+":"+
+String(s).padStart(2,"0")+"."+
+String(ms).padStart(3,"0")
+
+}
+
+let current=Date.now()-startTime
+
+let ect=current+remaining
+
+let m=Math.floor(ect/60000)
+let s=Math.floor((ect%60000)/1000)
+let ms=ect%1000
+
+document.getElementById("ect").textContent=
+String(m).padStart(2,"0")+":"+
+String(s).padStart(2,"0")+"."+
+String(ms).padStart(3,"0")
 
 </script>
 
