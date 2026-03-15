@@ -229,11 +229,13 @@ let o=document.createElement("option"); o.value="ATEMS"; o.textContent="ATEMS Or
 else if(game==="gv3" && cat==="D-nizer"){
 let o=document.createElement("option"); o.value="D-nizer"; o.textContent="D-nizer"; subcategorySelect.appendChild(o)
 }
-else if(game==="ix1" && (cat==="Any%"||cat==="No Pride")){
-stages.ix1.forEach(s=>{
-let o=document.createElement("option"); o.value=s; o.textContent=s; subcategorySelect.appendChild(o)
-})
+else if(game==="ix1" && (cat==="Any%" || cat==="No Pride")){
+    let o = document.createElement("option")
+    o.value = "Beat the Game!"
+    o.textContent = "Beat the Game!"
+    subcategorySelect.appendChild(o)
 }
+
 else{
 let o=document.createElement("option"); o.value="default"; o.textContent="Default"; subcategorySelect.appendChild(o)
 }
