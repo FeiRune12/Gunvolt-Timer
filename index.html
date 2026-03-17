@@ -375,7 +375,35 @@ bestSegments[currentSplit]=segment
 splits[currentSplit].classList.add("gold")
 }
 
-splits[currentSplit].children[1].textContent=document.getElementById("timer").textContent
+let splitEl = splits[currentSplit]
+let timeEl = splitEl.querySelector(".time")
+let deltaEl = splitEl.querySelector(".delta")
+
+timeEl.textContent = document.getElementById("timer").textContent
+
+// cálculo do delta
+if(bestSegments[currentSplit] != null){
+let diff = segment - bestSegments[currentSplit]
+
+let sign = diff < 0 ? "-" : "+"
+let abs = Math.abs(diff)
+
+let s = Math.floor(abs/1000)
+let m = Math.floor(s/60)
+s = s % 60
+
+let deltaText = (m>0 ? m+"m ":"") + s+"s"
+
+deltaEl.textContent = `(${sign}${deltaText})`
+
+deltaEl.classList.remove("positive","negative")
+
+if(diff < 0){
+deltaEl.classList.add("negative")
+}else if(diff > 0){
+deltaEl.classList.add("positive")
+}
+}
 
 currentSplit++
 updateProgress()
@@ -429,6 +457,10 @@ splits.forEach(s=>{
 s.children[1].textContent="-"
 s.classList.remove("gold")
 })
+
+s.querySelector(".delta").textContent=""
+s.querySelector(".delta").classList.remove("positive","negative")
+
 
 highlight()
 updateProgress()
