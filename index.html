@@ -67,8 +67,6 @@ text-shadow:0 0 20px #00eaff;
 margin-top:12px;
 }
 
-#runinfo{margin-top:5px;color:#bbb;font-size:14px}
-
 #progress{
 width:100%;
 height:8px;
@@ -88,7 +86,7 @@ background:linear-gradient(90deg,#00eaff,#00ff88);
 margin-top:15px;
 background:#070707;
 overflow-y:auto;
-height:350px; /* FORÇA altura real */
+height:350px;
 }
 
 .split{
@@ -111,15 +109,8 @@ margin-left:8px;
 font-size:12px;
 }
 
-.delta.positive{ color:#ff4d4d; } /* perdeu tempo */
-.delta.negative{ color:#00ff88; } /* ganhou tempo */
-
-#estimation{
-margin-top:6px;
-font-size:18px;
-color:#66eaff;
-text-shadow:0 0 10px #66eaff;
-}
+.delta.positive{ color:#ff4d4d; }
+.delta.negative{ color:#00ff88; }
 </style>
 </head>
 
@@ -159,12 +150,6 @@ text-shadow:0 0 10px #66eaff;
 <button id="pauseBtn" onclick="togglePause()">Pause</button>
 
 <div id="timer">00h 00m 00s</div>
-
-<div id="estimation">
-Estimated: <span id="ect">--:--.---</span>
-</div>
-
-<div id="runinfo"></div>
 
 <div id="progress"><div id="bar"></div></div>
 
@@ -207,9 +192,8 @@ const subcategorySelect=document.getElementById("subcategory")
 const splitDiv=document.getElementById("splits")
 
 gameSelect.addEventListener("change",loadCategories)
-categorySelect.addEventListener("change",()=>{ loadSubcategories(); loadSplits(); updateInfo() })
+categorySelect.addEventListener("change",()=>{ loadSubcategories(); loadSplits() })
 subcategorySelect.addEventListener("change",loadSplits)
-document.getElementById("platform").addEventListener("change",updateInfo)
 
 function getRunKey(){ return gameSelect.value+"_"+categorySelect.value+"_"+subcategorySelect.value+"_"+document.getElementById("platform").value }
 function saveData(){ localStorage.setItem(getRunKey(),JSON.stringify({pb:pbTime,bestSeg:bestSegments})) }
@@ -223,7 +207,6 @@ let o=document.createElement("option"); o.textContent=c; categorySelect.appendCh
 })
 loadSubcategories()
 loadSplits()
-updateInfo()
 }
 
 function loadSubcategories(){
@@ -307,12 +290,6 @@ el.scrollIntoView({behavior:"smooth", block:"center"})
 },30)
 }
 
-function updateInfo(){
-let game=gameSelect.value, cat=categorySelect.value, sub=subcategorySelect.value, plat=document.getElementById("platform").value
-document.getElementById("runinfo").textContent=
-game.toUpperCase()+" | "+cat+(sub!=="default"?" - "+sub:"")+" | "+plat
-}
-
 function highlight(){
 let splits=document.querySelectorAll(".split")
 splits.forEach(s=>s.classList.remove("current"))
@@ -329,8 +306,6 @@ timerInterval=setInterval(()=>{
 if(paused) return
 
 let t=Date.now()-startTime-pausedTime
-
-updateECT()
 
 let h=Math.floor(t/3600000)
 let m=Math.floor((t%3600000)/60000)
@@ -379,7 +354,6 @@ let deltaEl = splitEl.querySelector(".delta")
 
 timeEl.textContent = document.getElementById("timer").textContent
 
-// cálculo do delta
 if(bestSegments[currentSplit] != null){
 let diff = segment - bestSegments[currentSplit]
 
@@ -436,8 +410,6 @@ scrollToCurrent()
 }
 
 function resetTimer(){
-document.getElementById("ect").textContent="--:--:--"
-
 clearInterval(timerInterval)
 timerInterval=null
 
@@ -454,11 +426,10 @@ let splits=document.querySelectorAll(".split")
 splits.forEach(s=>{
 s.children[1].textContent="-"
 s.classList.remove("gold")
+let delta = s.querySelector(".delta")
+delta.textContent=""
+delta.classList.remove("positive","negative")
 })
-
-s.querySelector(".delta").textContent=""
-s.querySelector(".delta").classList.remove("positive","negative")
-
 
 highlight()
 updateProgress()
@@ -467,27 +438,6 @@ updateProgress()
 function updateProgress(){
 let splits=document.querySelectorAll(".split")
 document.getElementById("bar").style.width=(currentSplit/splits.length)*100+"%"
-}
-
-function updateECT(){
-if(!startTime) return
-
-let remaining=0
-for(let i=currentSplit;i<bestSegments.length;i++){
-remaining+=bestSegments[i]||0
-}
-
-let current=Date.now()-startTime-pausedTime
-let ect=current+remaining
-
-let h=Math.floor(ect/3600000)
-let m=Math.floor((ect%3600000)/60000)
-let s=Math.floor((ect%60000)/1000)
-
-document.getElementById("ect").textContent=
-String(h).padStart(2,"0")+":"+
-String(m).padStart(2,"0")+":"+
-String(s).padStart(2,"0")
 }
 
 document.addEventListener("keydown",e=>{
